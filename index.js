@@ -22,9 +22,6 @@ const options = {
     },
     servers: [
       {
-        url: "http://localhost:4000",
-      },
-      {
         url: "http://localhost:3005",
       },
       {
@@ -54,7 +51,12 @@ let PSEUDO_DB = [
   { id: generateId(), name: "Jack", age: 45 },
 ];
 
-const PSEUDO_DB_COPY = [...PSEUDO_DB];
+const PSEUDO_DB_COPY = [
+  { id: generateId(), name: "John", age: 23 },
+  { id: generateId(), name: "Jane", age: 13 },
+  { id: generateId(), name: "Joe", age: 33 },
+  { id: generateId(), name: "Jack", age: 45 },
+];
 
 /**
  * @swagger
@@ -107,7 +109,7 @@ const PSEUDO_DB_COPY = [...PSEUDO_DB];
  */
 
 app.get("/users", (req, res) => {
-  res.status(200).json({ users: PSEUDO_DB });
+  return res.status(200).json({ users: PSEUDO_DB });
 });
 
 /**
@@ -139,12 +141,12 @@ app.get("/users", (req, res) => {
 app.get("/users/:id", (req, res) => {
   try {
     if (!PSEUDO_DB.find((user) => user.id === req.params.id)) {
-      res.status(404).json({ message: "user doesn't exist" });
+      return res.status(404).json({ message: "user doesn't exist" });
     }
 
-    res.status(200).json({ users: PSEUDO_DB });
+    return res.status(200).json({ users: PSEUDO_DB });
   } catch (error) {
-    res.status(500).json({ message: "something went wrong" });
+    return res.status(500).json({ message: "something went wrong" });
   }
 });
 
@@ -173,6 +175,13 @@ app.get("/users/:id", (req, res) => {
 
 app.post("/users", (req, res) => {
   try {
+    if (
+      typeof req.body.name !== "string" ||
+      Number.isNaN(Number(req.body.age))
+    ) {
+      return res.status(400).json({ message: "wrong parameters" });
+    }
+
     const newUser = {
       id: generateId(),
       name: req.body.name,
@@ -180,14 +189,14 @@ app.post("/users", (req, res) => {
     };
 
     if (!!PSEUDO_DB.find((user) => user.name === req.body.name)) {
-      res.status(400).json({ message: "user already exists" });
+      return res.status(400).json({ message: "user already exists" });
     }
 
     PSEUDO_DB.push(newUser);
 
-    res.status(201).json({ message: "user has been created" });
+    return res.status(201).json({ message: "user has been created" });
   } catch (error) {
-    res.status(500).json({ message: "something went wrong" });
+    return res.status(500).json({ message: "something went wrong" });
   }
 });
 
@@ -214,17 +223,21 @@ app.delete("/users/:id", (req, res) => {
   try {
     const idToDelete = req.params.id;
 
+    if (typeof idToDelete !== "string") {
+      return res.status(400).json({ message: "wrong format of id" });
+    }
+
     const userExists = PSEUDO_DB.find((user) => user.id === idToDelete);
 
     if (userExists) {
       PSEUDO_DB = PSEUDO_DB.filter((user) => user.id !== idToDelete);
 
-      res.status(200).json({ message: "user deleted" });
+      return res.status(200).json({ message: "user deleted" });
     } else {
-      res.status(400).json({ message: "user not found" });
+      return res.status(400).json({ message: "user not found" });
     }
   } catch (error) {
-    res.status(500).json({ message: "something went wrong" });
+    return res.status(500).json({ message: "something went wrong" });
   }
 });
 
@@ -262,6 +275,10 @@ app.patch("/users/:id", (req, res) => {
   try {
     const idToUpdate = req.params.id;
 
+    if (typeof idToUpdate !== "string") {
+      return res.status(400).json({ message: "wrong format of id" });
+    }
+
     const userExists = PSEUDO_DB.find((user) => user.id === idToUpdate);
 
     if (userExists) {
@@ -269,12 +286,12 @@ app.patch("/users/:id", (req, res) => {
         user.id === idToUpdate ? { ...user, ...req.body } : user
       );
 
-      res.status(200).json({ message: "user has been updated" });
+      return res.status(200).json({ message: "user has been updated" });
     } else {
-      res.status(404).json({ message: "user not found" });
+      return res.status(404).json({ message: "user not found" });
     }
   } catch (error) {
-    res.status(500).json({ message: "something went wrong" });
+    return res.status(500).json({ message: "something went wrong" });
   }
 });
 
@@ -289,8 +306,8 @@ app.patch("/users/:id", (req, res) => {
  */
 
 app.get("/restart", (req, res) => {
-  PSEUDO_DB = PSEUDO_DB_COPY;
-  res.status(200).json({ message: "Done" });
+  PSEUDO_DB = [...PSEUDO_DB_COPY];
+  return res.status(200).json({ message: "Done" });
 });
 
 /**
@@ -306,4 +323,4 @@ app.get("/error", (req, res) => {
   return res.status(500).send("error");
 });
 
-app.listen(process.env.PORT || 4000, () => console.log("app is running"));
+app.listen(process.env.PORT || 3005, () => console.log("app is running"));
